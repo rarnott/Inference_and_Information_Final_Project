@@ -1,0 +1,4 @@
+  File "run_submitted_code.py", line 11
+    print 'Running: ' + student_MIT_email
+                    ^
+SyntaxError: Missing parentheses in call to 'print'

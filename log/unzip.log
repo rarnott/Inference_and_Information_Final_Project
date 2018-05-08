@@ -1,0 +1,12 @@
+---------- LOG FILE FOR UNZIP COMMANDS, RUN AT Mon, May  7, 2018 10:56:38 PM-----
+---1 submissions to process---
+anonymous
+-------------
+Extracting to directory anonymous
+Archive:  zip_files/anonymous@mit.edu.1.zip
+ extracting: test/anonymous/data.txt  
+  inflating: test/anonymous/decode.py  
+  inflating: test/anonymous/decode.pyc  
+ extracting: test/anonymous/support.py  
+  inflating: test/anonymous/support.pyc  
+Success!
