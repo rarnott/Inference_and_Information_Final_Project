@@ -5,6 +5,7 @@ from transitions import Epsilon_Transition,Uniform_Transition
 from dist import DDist,binom
 import matplotlib.pyplot as plt
 from multiprocessing import Pool, TimeoutError
+from encode import random_encoding
 
 #########################################################################################################################################################
 
@@ -137,7 +138,7 @@ class MCMC:
 	#		discarding the first burn_in samples.
 	#	Takes encoded sequence as input
 	#	Returns samples
-	def metropolis_hastings(self, ciphertext, sequence_length=250, n_epochs=10, n_iters = 100):
+	def metropolis_hastings(self, ciphertext, sequence_length=250, max_epochs=10, n_iters = 100):
 		# assert burn_in <= n_iters
 		def gen_sequence():
 			if sequence_length != len(ciphertext):
@@ -153,7 +154,8 @@ class MCMC:
 		acceptances=[]
 		log_likelihoods=[]
 		max_likelihood_sample = current_state
-		for epoch in range(n_epochs):
+		last_acc_rate = 0
+		for epoch in range(max_epochs):
 			n_accept = 0
 			for t in range(n_iters):
 				sequence=gen_sequence()
@@ -168,6 +170,8 @@ class MCMC:
 				# if self.target.log_likelihood(ciphertext,current_state) > max_likelihood:
 					max_likelihood_sample=current_state
 					max_likelihood = log_likelihood
+			# rate = float(n_accept)/n_iters
+			# print(epoch, rate)
 		overall_likelihood = self.target.log_likelihood(ciphertext,max_likelihood_sample)
 		print("Overall Max Likelihood:", overall_likelihood)
 		return samples, acceptances, max_likelihood_sample, overall_likelihood
@@ -184,14 +188,15 @@ def decode(ciphertext, output_file_name):
 	e = 1-1/binom(m,2)
 	eps_trans = Epsilon_Transition(english.alphabet,eps=e)
 	mcmc_test = MCMC(english,eps_trans,english.alphabet,floor=floor)
-	n_iters=10
-	n_epochs=200
+	n_iters=100
+	max_epochs=40
 	p = 0.1
 	n = len(ciphertext)
+	seq_len = int(p*n) if int(p*n) >= 500 else min(n,500)
 	n_starts = 3
 	pool = Pool(processes=5)
 	multi_start = [pool.apply_async(mcmc_test.metropolis_hastings, (ciphertext, 
-			int(p*n), n_epochs, n_iters)) for i in range(n_starts)]
+			seq_len, max_epochs, n_iters)) for i in range(n_starts)]
 	print("Processes Started")
 	results = [res.get(timeout=10000) for res in multi_start]
 	best_result = max(results,key=lambda x: x[3])
@@ -209,12 +214,13 @@ def decode(ciphertext, output_file_name):
 if __name__ == "__main__":
 	output = open("output.txt","w+")
 	output.close()
-	cipher_file = open("../ciphertext.txt","r")
-	ciphertext = cipher_file.read().replace("\n", "")
-	decode(ciphertext,"output.txt")
+	alphabet = np.genfromtxt("alphabet.csv",delimiter=",",dtype="unicode")
 	plain_file = open("../plaintext.txt","r")
+	plain_file = open("../plaintexts/plaintext_warandpeace.txt","r")
 	plaintext = plain_file.read().replace("\n","")
-	
+	ciphertext = random_encoding(plaintext,alphabet)
+	decode(ciphertext,"output.txt")
+
 	#find accuracy
 	decoded = open("output.txt","r")
 	decoded_text = decoded.read().replace("\n","")
@@ -224,3 +230,20 @@ if __name__ == "__main__":
 		if decoded_text[i] == plaintext[i]:
 			n_correct += 1
 	print(float(n_correct)/len(decoded_text))
+
+	# for pt in ["feynman","paradiselost","warandpeace"]:
+	# 	print(pt)
+	# 	plain_file = open("../plaintexts/plaintext_"+pt+".txt","r")
+	# 	plaintext = plain_file.read().replace("\n","")
+	# 	ciphertext = random_encoding(plaintext,alphabet)
+	# 	decode(ciphertext,"output.txt")
+
+	# 	#find accuracy
+	# 	decoded = open("output.txt","r")
+	# 	decoded_text = decoded.read().replace("\n","")
+	# 	decoded.close()
+	# 	n_correct = 0
+	# 	for i in range(len(decoded_text)):
+	# 		if decoded_text[i] == plaintext[i]:
+	# 			n_correct += 1
+	# 	print(float(n_correct)/len(decoded_text))
