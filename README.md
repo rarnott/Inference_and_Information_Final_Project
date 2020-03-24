@@ -1,4 +1,4 @@
-MCMC Decrypter created for the 6.437 Final Project, Spring 2018.
+Markov chain Monte Carlo (MCMC) Decrypter created for the Inference and Information (6.437) Final Project, Spring 2018.
 
 Originally written in Python 3, adapted to Python 2.7 for submission.
 
